@@ -1,0 +1,83 @@
+name: Autograding Tests
+'on':
+- push
+- repository_dispatch
+permissions:
+  checks: write
+  actions: read
+  contents: read
+jobs:
+  run-autograding-tests:
+    runs-on: ubuntu-latest
+    if: github.actor != 'github-classroom[bot]'
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Configurar JDK 21
+      uses: actions/setup-java@v4
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+        cache: maven
+
+    - name: Teste 01 - Atribuição Simples
+      id: teste01
+      uses: classroom-resources/autograding-command-grader@v1
+      with:
+        test-name: Teste 01 - Atribuição Simples
+        setup-command: ''
+        command: mvn test -Dtest=ValidadorFase3Test#test01_AtribuicaoSimples -f fase03-o-problema-da-ordem/pom.xml
+        timeout: 10
+        max-score: 2
+
+    - name: Teste 02 - Estruturas de controle
+      id: teste02
+      uses: classroom-resources/autograding-command-grader@v1
+      with:
+        test-name: Teste 02 - Estruturas de controle
+        setup-command: ''
+        command: mvn test -Dtest=ValidadorFase3Test#test02_EstruturasDeControle -f fase03-o-problema-da-ordem/pom.xml
+        timeout: 10
+        max-score: 2
+
+    - name: Teste 03 - Rejeita Código Mal Formado
+      id: teste03
+      uses: classroom-resources/autograding-command-grader@v1
+      with:
+        test-name: Teste 03 - Rejeita Código Mal Formado
+        setup-command: ''
+        command: mvn test -Dtest=ValidadorFase3Test#test03_RejeitaCodigoMalFormado -f fase03-o-problema-da-ordem/pom.xml
+        timeout: 10
+        max-score: 2
+
+    - name: Teste 04 - Rejeita Falta de Ponto e Vírgula
+      id: teste04
+      uses: classroom-resources/autograding-command-grader@v1
+      with:
+        test-name: Teste 04 - Rejeita Falta de Ponto e Vírgula
+        setup-command: ''
+        command: mvn test -Dtest=ValidadorFase3Test#test04_RejeitaFaltaDePontoEVirgula -f fase03-o-problema-da-ordem/pom.xml
+        timeout: 10
+        max-score: 2
+
+    - name: Teste 05 - Bloco Vazio e Null Statement
+      id: teste05
+      uses: classroom-resources/autograding-command-grader@v1
+      with:
+        test-name: Teste 05 - Bloco Vazio e Null Statement
+        setup-command: ''
+        command: mvn test -Dtest=ValidadorFase3Test#test05_BlocoVazioENullStatement -f fase03-o-problema-da-ordem/pom.xml
+        timeout: 10
+        max-score: 2
+
+    - name: Autograding Reporter
+      uses: classroom-resources/autograding-grading-reporter@v1
+      env:
+        TESTE01_RESULTS: "${{steps.teste01.outputs.result}}"
+        TESTE02_RESULTS: "${{steps.teste02.outputs.result}}"
+        TESTE03_RESULTS: "${{steps.teste03.outputs.result}}"
+        TESTE04_RESULTS: "${{steps.teste04.outputs.result}}"
+        TESTE05_RESULTS: "${{steps.teste05.outputs.result}}"
+      with:
+        runners: teste01,teste02,teste03,teste04,teste05

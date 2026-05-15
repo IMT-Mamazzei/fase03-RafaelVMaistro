@@ -1,0 +1,135 @@
+package br.maua.cic303;
+
+import br.maua.cic303.ast.*;
+import java_cup.runtime.*;
+
+parser code {:
+    public ASTNode root;
+
+    @Override
+    public void report_error(String message, Object info) {
+        System.err.println("Erro sintático: " + message);
+    }
+
+    @Override
+    public Symbol parse() throws Exception {
+        Symbol s = super.parse();
+        root = (ASTNode) s.value;
+        return s;
+    }
+:};
+
+terminal IF, THEN, ELSE, WHILE;
+terminal String REL_OP, ASSIGN, ADD_OP, MUL_OP;
+terminal String LPAREN, RPAREN, LBRACE, RBRACE, SEMI;
+terminal String NUMBER, ID;
+
+non terminal ASTNode program;
+non terminal BlockNode stmt_list;
+non terminal ASTNode stmt;
+non terminal ASTNode expr;
+non terminal BlockNode block;
+
+precedence left REL_OP;
+precedence left ADD_OP;
+precedence left MUL_OP;
+
+start with program;
+
+program ::=
+    stmt_list:s
+    {:
+        RESULT = s;
+    :}
+;
+
+stmt_list ::=
+    stmt:s
+    {:
+        BlockNode bloco = new BlockNode();
+        bloco.statements.add(s);
+        RESULT = bloco;
+    :}
+|
+    stmt_list:l stmt:s
+    {:
+        l.statements.add(s);
+        RESULT = l;
+    :}
+;
+
+block ::=
+    LBRACE stmt_list:l RBRACE
+    {:
+        RESULT = l;
+    :}
+;
+
+stmt ::=
+    ID:id ASSIGN expr:e SEMI
+    {:
+        RESULT = new AssignNode(
+            new IdentifierNode(id),
+            e
+        );
+    :}
+|
+    IF expr:cond THEN block:tb ELSE block:fb
+    {:
+        RESULT = new IfNode(cond, tb, fb);
+    :}
+|
+    IF expr:cond THEN block:tb
+    {:
+        RESULT = new IfNode(cond, tb, null);
+    :}
+|
+    WHILE expr:cond block:b
+    {:
+        RESULT = new WhileNode(cond, b);
+    :}
+;
+
+expr ::=
+    expr:e1 ADD_OP:op expr:e2
+    {:
+        RESULT = new BinOpNode(
+            op,
+            e1,
+            e2
+        );
+    :}
+|
+    expr:e1 MUL_OP:op expr:e2
+    {:
+        RESULT = new BinOpNode(
+            op,
+            e1,
+            e2
+        );
+    :}
+|
+    expr:e1 REL_OP:op expr:e2
+    {:
+        RESULT = new BinOpNode(
+            op,
+            e1,
+            e2
+        );
+    :}
+|
+    LPAREN expr:e RPAREN
+    {:
+        RESULT = e;
+    :}
+|
+    NUMBER:n
+    {:
+        RESULT = new NumberNode(n);
+    :}
+|
+    ID:id
+    {:
+        RESULT = new IdentifierNode(id);
+    :}
+;

@@ -1,0 +1,114 @@
+package br.maua.cic303;
+
+import java_cup.runtime.Symbol;
+import br.maua.cic303.ast.*;
+import java.util.ArrayList;
+import java.util.List;
+
+parser code {:
+    public ASTNode root;
+
+    public void syntax_error(Symbol cur_token) {
+        throw new RuntimeException("Erro Sintatico");
+    }
+:}
+
+terminal IF, THEN, ELSE, WHILE;
+terminal ASSIGN, LPAREN, RPAREN, LBRACE, RBRACE, SEMI;
+
+terminal String ID;
+terminal String NUMBER;
+terminal String ADD_OP;
+terminal String MUL_OP;
+terminal String REL_OP;
+
+non terminal ASTNode program;
+non terminal List stmt_list;
+non terminal ASTNode stmt;
+non terminal ASTNode assign_stmt;
+non terminal ASTNode if_stmt;
+non terminal ASTNode while_stmt;
+non terminal ASTNode block_stmt;
+non terminal ASTNode null_stmt;
+non terminal ASTNode expr;
+
+precedence left REL_OP;
+precedence left ADD_OP;
+precedence left MUL_OP;
+
+start with program;
+
+program ::=
+stmt_list:l
+{: root = new BlockNode(l); RESULT = root; :}
+;
+
+stmt_list ::=
+stmt_list:l stmt:s
+{: l.add(s); RESULT = l; :}
+|
+stmt:s
+{: List list = new ArrayList(); list.add(s); RESULT = list; :}
+;
+
+stmt ::=
+assign_stmt:a
+{: RESULT = a; :}
+|
+if_stmt:i
+{: RESULT = i; :}
+|
+while_stmt:w
+{: RESULT = w; :}
+|
+block_stmt:b
+{: RESULT = b; :}
+|
+null_stmt:n
+{: RESULT = n; :}
+;
+
+assign_stmt ::=
+ID:id ASSIGN expr:e SEMI
+{: RESULT = new AssignNode(id, e); :}
+;
+
+if_stmt ::=
+IF LPAREN expr:c RPAREN THEN stmt:t ELSE stmt:e
+{: RESULT = new IfNode(c, t, e); :}
+;
+
+while_stmt ::=
+WHILE LPAREN expr:c RPAREN stmt:s
+{: RESULT = new WhileNode(c, s); :}
+;
+
+block_stmt ::=
+LBRACE stmt_list:l RBRACE
+{: RESULT = new BlockNode(l); :}
+;
+
+null_stmt ::=
+SEMI
+{: RESULT = new BlockNode(new ArrayList()); :}
+;
+
+expr ::=
+expr:e1 ADD_OP:op expr:e2
+{: RESULT = new BinOpNode(e1, op, e2); :}
+|
+expr:e1 MUL_OP:op expr:e2
+{: RESULT = new BinOpNode(e1, op, e2); :}
+|
+expr:e1 REL_OP:op expr:e2
+{: RESULT = new BinOpNode(e1, op, e2); :}
+|
+LPAREN expr:e RPAREN
+{: RESULT = e; :}
+|
+NUMBER:n
+{: RESULT = new NumberNode(Double.parseDouble(n)); :}
+|
+ID:id
+{: RESULT = new IdentifierNode(id); :}
+;
